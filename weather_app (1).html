@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tänase Päeva Ilm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .location {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .location:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .location-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            min-width: 200px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 10px;
+        }
+
+        .dropdown-content.show {
+            display: block;
+            animation: dropdownOpen 0.3s ease;
+        }
+
+        @keyframes dropdownOpen {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .dropdown-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 15px;
+            margin: 5px;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .dropdown-item.active {
+            background: rgba(255, 255, 255, 0.25);
+            font-weight: 500;
+        }
+
+        .date {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-bottom: 30px;
+        }
+
+        .weather-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .temperature {
+            font-size: 3.5em;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .detail-label {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .hourly-forecast {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .hourly-title {
+            font-size: 1em;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .hourly-items {
+            display: flex;
+            justify-content: space-between;
+            overflow-x: auto;
+            gap: 15px;
+        }
+
+        .hourly-item {
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .hourly-time {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .hourly-icon {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .hourly-temp {
+            font-size: 0.9em;
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="location-dropdown">
+            <div class="location" id="location" onclick="toggleDropdown()">
+                <span id="currentLocation">Sigula, Kuusalu vald</span>
+                <span>📍</span>
+            </div>
+            <div class="dropdown-content" id="locationDropdown">
+                <div class="dropdown-item active" onclick="selectLocation('sigula')">
+                    Sigula, Kuusalu vald
+                </div>
+                <div class="dropdown-item" onclick="selectLocation('tallinn')">
+                    Tallinn, Eesti
+                </div>
+            </div>
+        </div>
+        <div class="date" id="date"></div>
+        
+        <div class="weather-icon" id="weatherIcon">☀️</div>
+        
+        <div class="temperature" id="temperature">18°</div>
+        <div class="description" id="description">Päikeseline</div>
+        
+        <div class="details">
+            <div class="detail-item">
+                <div class="detail-label">Tuul</div>
+                <div class="detail-value" id="wind">12 km/h</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Niiskus</div>
+                <div class="detail-value" id="humidity">65%</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Nähtavus</div>
+                <div class="detail-value" id="visibility">10 km</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">UV indeks</div>
+                <div class="detail-value" id="uv">6</div>
+            </div>
+        </div>
+
+        <div class="hourly-forecast">
+            <div class="hourly-title">Täna tunnipõhiselt</div>
+            <div class="hourly-items" id="hourlyForecast">
+                <div class="hourly-item">
+                    <div class="hourly-time">12:00</div>
+                    <div class="hourly-icon">☀️</div>
+                    <div class="hourly-temp">18°</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">15:00</div>
+                    <div class="hourly-icon">⛅</div>
+                    <div class="hourly-temp">20°</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">18:00</div>
+                    <div class="hourly-icon">🌤️</div>
+                    <div class="hourly-temp">17°</div>
+                </div>
+                <div class="hourly-item">
+                    <div class="hourly-time">21:00</div>
+                    <div class="hourly-icon">🌙</div>
+                    <div class="hourly-temp">14°</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="refresh-btn" onclick="updateWeather()">🔄 Uuenda</button>
+    </div>
+
+    <script>
+        // Asukohtade koordinaadid
+        const locations = {
+            sigula: {
+                name: 'Sigula, Kuusalu vald',
+                lat: 59.5167,
+                lon: 25.5833
+            },
+            tallinn: {
+                name: 'Tallinn, Eesti',
+                lat: 59.4370,
+                lon: 24.7536
+            }
+        };
+
+        let currentLocation = 'sigula';
+        let weatherData = null;
+
+        function updateDate() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            document.getElementById('date').textContent = now.toLocaleDateString('et-EE', options);
+        }
+
+        // Ilmakoodi teisendamine ikoonideks ja kirjeldusteks
+        function getWeatherInfo(weatherCode, isDay) {
+            const weatherCodes = {
+                0: { icon: isDay ? '☀️' : '🌙', desc: isDay ? 'Selge' : 'Selge öö' },
+                1: { icon: isDay ? '🌤️' : '🌙', desc: isDay ? 'Peamiselt selge' : 'Peamiselt selge öö' },
+                2: { icon: '⛅', desc: 'Osaliselt pilves' },
+                3: { icon: '☁️', desc: 'Pilves' },
+                45: { icon: '🌫️', desc: 'Udu' },
+                48: { icon: '🌫️', desc: 'Jääudu' },
+                51: { icon: '🌦️', desc: 'Kerge uduvihm' },
+                53: { icon: '🌦️', desc: 'Mõõdukas uduvihm' },
+                55: { icon: '🌧️', desc: 'Tugev uduvihm' },
+                61: { icon: '🌧️', desc: 'Kerge vihm' },
+                63: { icon: '🌧️', desc: 'Mõõdukas vihm' },
+                65: { icon: '🌧️', desc: 'Tugev vihm' },
+                71: { icon: '🌨️', desc: 'Kerge lumesadu' },
+                73: { icon: '❄️', desc: 'Mõõdukas lumesadu' },
+                75: { icon: '❄️', desc: 'Tugev lumesadu' },
+                80: { icon: '🌦️', desc: 'Kerged vihmahoogud' },
+                81: { icon: '🌧️', desc: 'Mõõdukad vihmahoogud' },
+                82: { icon: '⛈️', desc: 'Tugevad vihmahoogud' },
+                95: { icon: '⛈️', desc: 'Äike' },
+                96: { icon: '⛈️', desc: 'Äike rahehoobiga' },
+                99: { icon: '⛈️', desc: 'Tugev äike rahehoobiga' }
+            };
+            
+            return weatherCodes[weatherCode] || { icon: '❓', desc: 'Teadmata' };
+        }
+
+        // Päris ilmaandmete hankimine
+        async function fetchWeatherData(location) {
+            const { lat, lon } = locations[location];
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,relative_humidity_2m,weather_code,visibility,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=Europe%2FTallinn&forecast_days=1`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Viga ilmaandmete hankimisel:', error);
+                return null;
+            }
+        }
+            const dropdown = document.getElementById('locationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function toggleDropdown() {
+            const dropdown = document.getElementById('locationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        async function selectLocation(location) {
+            currentLocation = location;
+            
+            // Update location text
+            document.getElementById('currentLocation').textContent = locations[location].name;
+            
+            // Update active state in dropdown
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(item => item.classList.remove('active'));
+            
+            if (location === 'sigula') {
+                dropdownItems[0].classList.add('active');
+            } else {
+                dropdownItems[1].classList.add('active');
+            }
+            
+            // Hide dropdown
+            document.getElementById('locationDropdown').classList.remove('show');
+            
+            // Update weather
+            await updateWeather();
+        }
+
+        async function updateWeather() {
+            // Näita laadimist
+            document.getElementById('temperature').textContent = '...';
+            document.getElementById('description').textContent = 'Laadin andmeid...';
+            
+            const data = await fetchWeatherData(currentLocation);
+            
+            if (!data || !data.current) {
+                document.getElementById('temperature').textContent = '--°';
+                document.getElementById('description').textContent = 'Andmeid ei saadud';
+                return;
+            }
+            
+            const current = data.current;
+            const daily = data.daily;
+            const hourly = data.hourly;
+            
+            // Praegune ilm
+            const weatherInfo = getWeatherInfo(current.weather_code, current.is_day);
+            
+            document.getElementById('temperature').textContent = Math.round(current.temperature_2m) + '°';
+            document.getElementById('weatherIcon').textContent = weatherInfo.icon;
+            document.getElementById('description').textContent = weatherInfo.desc;
+            document.getElementById('wind').textContent = Math.round(current.wind_speed_10m) + ' km/h';
+            document.getElementById('humidity').textContent = current.relative_humidity_2m + '%';
+            document.getElementById('visibility').textContent = '10 km'; // Open-Meteo ei anna visibility
+            document.getElementById('uv').textContent = daily.uv_index_max[0] || '--';
+            
+            // Tunnipõhine ennustus (järgmised 4 tundi)
+            const hourlyContainer = document.getElementById('hourlyForecast');
+            hourlyContainer.innerHTML = '';
+            
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            for (let i = 0; i < 4; i++) {
+                const hourIndex = currentHour + i;
+                if (hourIndex >= 24) break; // Ära näita järgmise päeva tunde
+                
+                const temp = Math.round(hourly.temperature_2m[hourIndex]);
+                const code = hourly.weather_code[hourIndex];
+                const isDay = hourly.is_day[hourIndex];
+                const weather = getWeatherInfo(code, isDay);
+                
+                const time = String(hourIndex).padStart(2, '0') + ':00';
+                
+                const hourlyItem = document.createElement('div');
+                hourlyItem.className = 'hourly-item';
+                hourlyItem.innerHTML = `
+                    <div class="hourly-time">${time}</div>
+                    <div class="hourly-icon">${weather.icon}</div>
+                    <div class="hourly-temp">${temp}°</div>
+                `;
+                hourlyContainer.appendChild(hourlyItem);
+            }
+        }
+
+        // Käivita leht
+        updateDate();
+        updateWeather(); // Nüüd async funktsioon
+
+        // Automaatne uuendamine iga 10 minuti järel (päris andmete jaoks)
+        setInterval(updateWeather, 600000);
+
+        // Sulge dropdown kui klõpsatakse väljaspool
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('locationDropdown');
+            const locationDiv = document.getElementById('location');
+            
+            if (!locationDiv.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
