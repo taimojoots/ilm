@@ -12,3 +12,18 @@ body {
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
   display: inline-block;
 }
+
+#forecast {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.forecast-block {
+  background: #f0f8ff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  width: 80px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}

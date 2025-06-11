@@ -4,48 +4,45 @@ const locations = {
 };
 
 const weatherCodes = {
-  0: "Selge",
-  1: "Peamiselt selge",
-  2: "Osaliselt pilves",
-  3: "Pilves",
-  45: "Udu",
-  48: "Udune härmatis",
-  51: "Nõrk uduvihm",
-  53: "Mõõdukas uduvihm",
-  55: "Tugev uduvihm",
-  61: "Nõrk vihm",
-  63: "Mõõdukas vihm",
-  65: "Tugev vihm",
-  71: "Nõrk lumesadu",
-  73: "Mõõdukas lumesadu",
-  75: "Tugev lumesadu",
-  80: "Nõrgad hoovihmad",
-  81: "Mõõdukad hoovihmad",
-  82: "Tugevad hoovihmad",
-  95: "Äikest",
-  96: "Äikest rahega",
-  99: "Tugev äike rahega"
+  0: "Selge", 1: "Peamiselt selge", 2: "Osaliselt pilves", 3: "Pilves",
+  45: "Udu", 48: "Udune härmatis",
+  51: "Nõrk uduvihm", 53: "Mõõdukas uduvihm", 55: "Tugev uduvihm",
+  61: "Nõrk vihm", 63: "Mõõdukas vihm", 65: "Tugev vihm",
+  71: "Nõrk lumesadu", 73: "Mõõdukas lumesadu", 75: "Tugev lumesadu",
+  80: "Nõrgad hoovihmad", 81: "Mõõdukad hoovihmad", 82: "Tugevad hoovihmad",
+  95: "Äikest", 96: "Äikest rahega", 99: "Tugev äike rahega"
 };
 
 function fetchWeather(locationKey) {
   const loc = locations[locationKey];
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const start = now.toISOString().split(":")[0] + ":00";
+  const later = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().split(":")[0] + ":00";
 
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Europe%2FTallinn`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weathercode&timezone=Europe%2FTallinn&start_date=${start.slice(0, 10)}&end_date=${later.slice(0, 10)}`;
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const dayIndex = data.daily.time.indexOf(today);
-      if (dayIndex === -1) throw new Error("Tänase ilmaandmeid ei leitud.");
+      const times = data.hourly.time;
+      const temps = data.hourly.temperature_2m;
+      const codes = data.hourly.weathercode;
 
-      const tMin = data.daily.temperature_2m_min[dayIndex];
-      const tMax = data.daily.temperature_2m_max[dayIndex];
-      const code = data.daily.weathercode[dayIndex];
+      const forecastContainer = document.getElementById("forecast");
+      forecastContainer.innerHTML = "";
+
+      let nowHour = now.getHours();
+      for (let i = 0; i < times.length; i++) {
+        const hour = new Date(times[i]).getHours();
+        if ((hour - nowHour + 24) % 3 === 0 && hour >= nowHour && forecastContainer.children.length < 3) {
+          const div = document.createElement("div");
+          div.className = "forecast-block";
+          div.innerHTML = `<strong>${hour}:00</strong><br>${Math.round(temps[i])}°C<br>${weatherCodes[codes[i]] || "?"}`;
+          forecastContainer.appendChild(div);
+        }
+      }
 
       document.getElementById("location").textContent = `Asukoht: ${loc.name}`;
-      document.getElementById("temp").textContent = `Temperatuur: ${Math.round(tMin)}°C kuni ${Math.round(tMax)}°C`;
-      document.getElementById("desc").textContent = `Ilmatüüp: ${weatherCodes[code] || "Tundmatu"}`;
     })
     .catch(err => {
       console.error("Ilma laadimine ebaõnnestus:", err);
