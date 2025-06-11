@@ -291,143 +291,22 @@
     </div>
 
     <script>
-        // Ilmaandmed erinevatele asukohtadele
-        const weatherDataByLocation = {
-            sigula: [
-                {
-                    temp: 16,
-                    icon: '🌊',
-                    desc: 'Meretuuline',
-                    wind: '15 km/h',
-                    humidity: '72%',
-                    visibility: '12 km',
-                    uv: '5'
-                },
-                {
-                    temp: 12,
-                    icon: '🌧️',
-                    desc: 'Vihmahoog',
-                    wind: '22 km/h',
-                    humidity: '88%',
-                    visibility: '7 km',
-                    uv: '2'
-                },
-                {
-                    temp: 19,
-                    icon: '⛅',
-                    desc: 'Pilves tuulega',
-                    wind: '18 km/h',
-                    humidity: '65%',
-                    visibility: '15 km',
-                    uv: '6'
-                },
-                {
-                    temp: 8,
-                    icon: '🌨️',
-                    desc: 'Lumesadu tuulega',
-                    wind: '28 km/h',
-                    humidity: '92%',
-                    visibility: '4 km',
-                    uv: '1'
-                }
-            ],
-            tallinn: [
-                {
-                    temp: 18,
-                    icon: '☀️',
-                    desc: 'Päikeseline',
-                    wind: '12 km/h',
-                    humidity: '62%',
-                    visibility: '15 km',
-                    uv: '6'
-                },
-                {
-                    temp: 14,
-                    icon: '🌦️',
-                    desc: 'Hoovihm',
-                    wind: '16 km/h',
-                    humidity: '78%',
-                    visibility: '10 km',
-                    uv: '3'
-                },
-                {
-                    temp: 21,
-                    icon: '🌤️',
-                    desc: 'Osaliselt päikeseline',
-                    wind: '10 km/h',
-                    humidity: '58%',
-                    visibility: '18 km',
-                    uv: '7'
-                },
-                {
-                    temp: 6,
-                    icon: '❄️',
-                    desc: 'Kerge lumesadu',
-                    wind: '20 km/h',
-                    humidity: '85%',
-                    visibility: '8 km',
-                    uv: '1'
-                }
-            ]
-        };
-
-        const hourlyDataByLocation = {
-            sigula: [
-                [
-                    { time: '12:00', icon: '🌊', temp: 16 },
-                    { time: '15:00', icon: '⛅', temp: 17 },
-                    { time: '18:00', icon: '🌤️', temp: 15 },
-                    { time: '21:00', icon: '🌙', temp: 13 }
-                ],
-                [
-                    { time: '12:00', icon: '🌧️', temp: 12 },
-                    { time: '15:00', icon: '⛈️', temp: 13 },
-                    { time: '18:00', icon: '🌧️', temp: 11 },
-                    { time: '21:00', icon: '☁️', temp: 10 }
-                ],
-                [
-                    { time: '12:00', icon: '⛅', temp: 19 },
-                    { time: '15:00', icon: '🌤️', temp: 20 },
-                    { time: '18:00', icon: '⛅', temp: 18 },
-                    { time: '21:00', icon: '🌙', temp: 16 }
-                ],
-                [
-                    { time: '12:00', icon: '🌨️', temp: 8 },
-                    { time: '15:00', icon: '❄️', temp: 7 },
-                    { time: '18:00', icon: '🌨️', temp: 6 },
-                    { time: '21:00', icon: '☁️', temp: 5 }
-                ]
-            ],
-            tallinn: [
-                [
-                    { time: '12:00', icon: '☀️', temp: 18 },
-                    { time: '15:00', icon: '☀️', temp: 20 },
-                    { time: '18:00', icon: '🌤️', temp: 17 },
-                    { time: '21:00', icon: '🌙', temp: 15 }
-                ],
-                [
-                    { time: '12:00', icon: '🌦️', temp: 14 },
-                    { time: '15:00', icon: '⛈️', temp: 15 },
-                    { time: '18:00', icon: '🌧️', temp: 13 },
-                    { time: '21:00', icon: '☁️', temp: 12 }
-                ],
-                [
-                    { time: '12:00', icon: '🌤️', temp: 21 },
-                    { time: '15:00', icon: '☀️', temp: 23 },
-                    { time: '18:00', icon: '🌤️', temp: 20 },
-                    { time: '21:00', icon: '🌙', temp: 18 }
-                ],
-                [
-                    { time: '12:00', icon: '❄️', temp: 6 },
-                    { time: '15:00', icon: '🌨️', temp: 5 },
-                    { time: '18:00', icon: '❄️', temp: 4 },
-                    { time: '21:00', icon: '☁️', temp: 3 }
-                ]
-            ]
+        // Asukohtade koordinaadid
+        const locations = {
+            sigula: {
+                name: 'Sigula, Kuusalu vald',
+                lat: 59.5167,
+                lon: 25.5833
+            },
+            tallinn: {
+                name: 'Tallinn, Eesti',
+                lat: 59.4370,
+                lon: 24.7536
+            }
         };
 
         let currentLocation = 'sigula';
-        let currentWeatherIndex = 0;
+        let weatherData = null;
 
         function updateDate() {
             const now = new Date();
@@ -440,43 +319,154 @@
             document.getElementById('date').textContent = now.toLocaleDateString('et-EE', options);
         }
 
-        function updateWeather() {
-            const weather = weatherData[currentWeatherIndex];
-            const hourly = hourlyData[currentWeatherIndex];
+        // Ilmakoodi teisendamine ikoonideks ja kirjeldusteks
+        function getWeatherInfo(weatherCode, isDay) {
+            const weatherCodes = {
+                0: { icon: isDay ? '☀️' : '🌙', desc: isDay ? 'Selge' : 'Selge öö' },
+                1: { icon: isDay ? '🌤️' : '🌙', desc: isDay ? 'Peamiselt selge' : 'Peamiselt selge öö' },
+                2: { icon: '⛅', desc: 'Osaliselt pilves' },
+                3: { icon: '☁️', desc: 'Pilves' },
+                45: { icon: '🌫️', desc: 'Udu' },
+                48: { icon: '🌫️', desc: 'Jääudu' },
+                51: { icon: '🌦️', desc: 'Kerge uduvihm' },
+                53: { icon: '🌦️', desc: 'Mõõdukas uduvihm' },
+                55: { icon: '🌧️', desc: 'Tugev uduvihm' },
+                61: { icon: '🌧️', desc: 'Kerge vihm' },
+                63: { icon: '🌧️', desc: 'Mõõdukas vihm' },
+                65: { icon: '🌧️', desc: 'Tugev vihm' },
+                71: { icon: '🌨️', desc: 'Kerge lumesadu' },
+                73: { icon: '❄️', desc: 'Mõõdukas lumesadu' },
+                75: { icon: '❄️', desc: 'Tugev lumesadu' },
+                80: { icon: '🌦️', desc: 'Kerged vihmahoogud' },
+                81: { icon: '🌧️', desc: 'Mõõdukad vihmahoogud' },
+                82: { icon: '⛈️', desc: 'Tugevad vihmahoogud' },
+                95: { icon: '⛈️', desc: 'Äike' },
+                96: { icon: '⛈️', desc: 'Äike rahehoobiga' },
+                99: { icon: '⛈️', desc: 'Tugev äike rahehoobiga' }
+            };
             
-            document.getElementById('temperature').textContent = weather.temp + '°';
-            document.getElementById('weatherIcon').textContent = weather.icon;
-            document.getElementById('description').textContent = weather.desc;
-            document.getElementById('wind').textContent = weather.wind;
-            document.getElementById('humidity').textContent = weather.humidity;
-            document.getElementById('visibility').textContent = weather.visibility;
-            document.getElementById('uv').textContent = weather.uv;
+            return weatherCodes[weatherCode] || { icon: '❓', desc: 'Teadmata' };
+        }
 
-            // Uuenda tunnipõhist ennustust
+        // Päris ilmaandmete hankimine
+        async function fetchWeatherData(location) {
+            const { lat, lon } = locations[location];
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,relative_humidity_2m,weather_code,visibility,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=Europe%2FTallinn&forecast_days=1`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Viga ilmaandmete hankimisel:', error);
+                return null;
+            }
+        }
+            const dropdown = document.getElementById('locationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function toggleDropdown() {
+            const dropdown = document.getElementById('locationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        async function selectLocation(location) {
+            currentLocation = location;
+            
+            // Update location text
+            document.getElementById('currentLocation').textContent = locations[location].name;
+            
+            // Update active state in dropdown
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(item => item.classList.remove('active'));
+            
+            if (location === 'sigula') {
+                dropdownItems[0].classList.add('active');
+            } else {
+                dropdownItems[1].classList.add('active');
+            }
+            
+            // Hide dropdown
+            document.getElementById('locationDropdown').classList.remove('show');
+            
+            // Update weather
+            await updateWeather();
+        }
+
+        async function updateWeather() {
+            // Näita laadimist
+            document.getElementById('temperature').textContent = '...';
+            document.getElementById('description').textContent = 'Laadin andmeid...';
+            
+            const data = await fetchWeatherData(currentLocation);
+            
+            if (!data || !data.current) {
+                document.getElementById('temperature').textContent = '--°';
+                document.getElementById('description').textContent = 'Andmeid ei saadud';
+                return;
+            }
+            
+            const current = data.current;
+            const daily = data.daily;
+            const hourly = data.hourly;
+            
+            // Praegune ilm
+            const weatherInfo = getWeatherInfo(current.weather_code, current.is_day);
+            
+            document.getElementById('temperature').textContent = Math.round(current.temperature_2m) + '°';
+            document.getElementById('weatherIcon').textContent = weatherInfo.icon;
+            document.getElementById('description').textContent = weatherInfo.desc;
+            document.getElementById('wind').textContent = Math.round(current.wind_speed_10m) + ' km/h';
+            document.getElementById('humidity').textContent = current.relative_humidity_2m + '%';
+            document.getElementById('visibility').textContent = '10 km'; // Open-Meteo ei anna visibility
+            document.getElementById('uv').textContent = daily.uv_index_max[0] || '--';
+            
+            // Tunnipõhine ennustus (järgmised 4 tundi)
             const hourlyContainer = document.getElementById('hourlyForecast');
             hourlyContainer.innerHTML = '';
             
-            hourly.forEach(item => {
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            for (let i = 0; i < 4; i++) {
+                const hourIndex = currentHour + i;
+                if (hourIndex >= 24) break; // Ära näita järgmise päeva tunde
+                
+                const temp = Math.round(hourly.temperature_2m[hourIndex]);
+                const code = hourly.weather_code[hourIndex];
+                const isDay = hourly.is_day[hourIndex];
+                const weather = getWeatherInfo(code, isDay);
+                
+                const time = String(hourIndex).padStart(2, '0') + ':00';
+                
                 const hourlyItem = document.createElement('div');
                 hourlyItem.className = 'hourly-item';
                 hourlyItem.innerHTML = `
-                    <div class="hourly-time">${item.time}</div>
-                    <div class="hourly-icon">${item.icon}</div>
-                    <div class="hourly-temp">${item.temp}°</div>
+                    <div class="hourly-time">${time}</div>
+                    <div class="hourly-icon">${weather.icon}</div>
+                    <div class="hourly-temp">${temp}°</div>
                 `;
                 hourlyContainer.appendChild(hourlyItem);
-            });
-
-            // Järgmine ilmaandmete komplekt
-            currentWeatherIndex = (currentWeatherIndex + 1) % weatherData.length;
+            }
         }
 
         // Käivita leht
         updateDate();
-        updateWeather();
+        updateWeather(); // Nüüd async funktsioon
 
-        // Automaatne uuendamine iga 30 sekundi järel (näidiseks)
-        setInterval(updateWeather, 30000);
+        // Automaatne uuendamine iga 10 minuti järel (päris andmete jaoks)
+        setInterval(updateWeather, 600000);
+
+        // Sulge dropdown kui klõpsatakse väljaspool
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('locationDropdown');
+            const locationDiv = document.getElementById('location');
+            
+            if (!locationDiv.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
     </script>
 </body>
 </html>
