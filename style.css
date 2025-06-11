@@ -18,12 +18,14 @@ body {
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .forecast-block {
   background: #f0f8ff;
   padding: 1rem;
   border-radius: 0.5rem;
-  width: 80px;
+  width: 100px;
   box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  text-align: center;
 }
